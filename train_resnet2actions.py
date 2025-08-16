@@ -11,7 +11,6 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import wandb
 from resnet import ResNet2ContinuousAction
-
 class RobotActionDataset(Dataset):
     """机器人动作数据集"""
     def __init__(self, image_paths, action_sequences, transform=None):
