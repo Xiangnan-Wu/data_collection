@@ -8,8 +8,6 @@ from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
 from frankapy.proto import PosePositionSensorMessage, ShouldTerminateSensorMessage, CartesianImpedanceSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
 
-from frankapy.utils import min_jerk, min_jerk_weight
-
 import rospy
 
 if __name__ == "__main__":
