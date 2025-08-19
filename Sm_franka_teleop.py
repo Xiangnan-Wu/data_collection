@@ -6,6 +6,15 @@ sys.path.insert(0, current_dir)
 sys.path.insert(0, os.path.join(current_dir, 'input_device'))
 sys.path.insert(0, os.path.join(current_dir, 'shared_memory'))
 
+# 导入pynput库替代keyboard（不需要sudo权限）
+try:
+    from pynput import keyboard as pynput_keyboard
+    pynput_available = True
+except ImportError:
+    print("Warning: pynput not installed. Please install: pip install pynput")
+    pynput_keyboard = None
+    pynput_available = False
+
 
 # 直接导入模块文件
 from input_device.spacemouse import FrankaSpacemouse
@@ -56,6 +65,81 @@ class Sm_franka_teleop:
        self.init_time = None
        self.index = 0
        self.trajectory_queue = None  # 在run_teleoperation中初始化
+       
+       # 键盘状态
+       self.gripper_state = False
+       self.recording_state = False
+       
+       # pynput键盘状态跟踪
+       self.keys_pressed = set()  # 跟踪当前按下的键
+       self.last_g_state = False
+       self.last_r_state = False
+   
+   def update_keyboard_state(self):
+       """更新键盘状态 - 在主循环中调用"""
+       if not pynput_available:
+           return
+           
+       # 检测当前按键状态（基于按键集合）
+       current_g = 'g' in self.keys_pressed
+       current_r = 'r' in self.keys_pressed
+       
+       # 模式选择：True=Toggle模式(按下切换), False=Hold模式(按住激活)
+       USE_TOGGLE_MODE = True
+       
+       if USE_TOGGLE_MODE:
+           # Toggle模式：按下瞬间切换状态
+           if current_g and not self.last_g_state:
+               self.gripper_state = not self.gripper_state
+               rospy.loginfo(f"🤖 夹爪状态切换: {'打开' if self.gripper_state else '关闭'}")
+               
+           if current_r and not self.last_r_state:
+               self.recording_state = not self.recording_state
+               if self.recording_state:
+                   rospy.loginfo(f"🔴 开始录制机械臂状态...")
+               else:
+                   rospy.loginfo(f"⏹️  停止录制机械臂状态")
+       else:
+           # Hold模式：按住时激活，松开时停止
+           # 夹爪状态跟随按键
+           if current_g != self.gripper_state:
+               self.gripper_state = current_g
+               rospy.loginfo(f"🤖 夹爪: {'按住-打开' if current_g else '松开-关闭'}")
+           
+           # 录制状态跟随按键  
+           if current_r != self.recording_state:
+               self.recording_state = current_r
+               if current_r:
+                   rospy.loginfo(f"🔴 按住R键-开始录制...")
+               else:
+                   rospy.loginfo(f"⏹️  松开R键-停止录制")
+       
+       # 保存当前状态用于下次比较
+       self.last_g_state = current_g
+       self.last_r_state = current_r
+       
+       return {
+           'gripper_state': self.gripper_state,
+           'recording_state': self.recording_state
+       }
+   
+   def on_key_press(self, key):
+       """pynput按键按下回调"""
+       try:
+           # 普通字符键
+           self.keys_pressed.add(key.char.lower())
+       except AttributeError:
+           # 特殊键（如Ctrl, Alt等）
+           pass
+   
+   def on_key_release(self, key):
+       """pynput按键释放回调"""
+       try:
+           # 普通字符键
+           self.keys_pressed.discard(key.char.lower())
+       except AttributeError:
+           # 特殊键
+           pass
       
    def run_teleoperation(self, save_traj:bool = False):
        """执行SpaceMouse遥操作"""
@@ -65,6 +149,7 @@ class Sm_franka_teleop:
                shm_manager,{
                'motion_6d': np.zeros(6),        # [dx,dy,dz,drx,dry,drz]
                'current_pose_7d': np.zeros(7),  # [x,y,z,qw,qx,qy,qz]
+               'keyboard_states': False,    # gripper状态
                'timestamp': 0.0,
                'sequence_id': 0,
            }, buffer_size=10000)
@@ -80,7 +165,24 @@ class Sm_franka_teleop:
            )
           
            rospy.loginfo(f"开始SpaceMouse遥操作 - 时长: {self.T}s, 频率: {self.frequency}Hz")
-           rospy.loginfo("按Ctrl+C停止操作")
+           rospy.loginfo("🎮 控制说明:")
+           rospy.loginfo("  - SpaceMouse: 控制机械臂移动")
+           rospy.loginfo("  - 键盘 'R' 键: 开始/停止录制轨迹")
+           rospy.loginfo("  - 键盘 'G' 键: 切换夹爪开/关")
+           rospy.loginfo("  - Ctrl+C: 停止操作")
+           rospy.loginfo("--------------------")
+           
+           # 启动键盘监听器（pynput）
+           keyboard_listener = None
+           if pynput_available:
+               keyboard_listener = pynput_keyboard.Listener(
+                   on_press=self.on_key_press,
+                   on_release=self.on_key_release
+               )
+               keyboard_listener.start()
+               rospy.loginfo("✅ 键盘监听已启动 (pynput)")
+           else:
+               rospy.logwarn("⚠️  键盘功能不可用 - 请安装: pip install pynput")
           
            with spacemouse:
                try:
@@ -91,6 +193,8 @@ class Sm_franka_teleop:
                       
                        # 读取SpaceMouse输入
                        motion = spacemouse.get_motion_state()
+                       # 更新键盘状态
+                       keyboard_states = self.update_keyboard_state()
                        #! 为了控制spacemouse按照理想方式移动，需要对motion进行一定的修改
                        motion[0] = -motion[0]  # 反转X轴方向
                        motion[4] = -motion[4]
@@ -109,10 +213,11 @@ class Sm_franka_teleop:
                            self.target_pose.rotation = self.target_pose.rotation @ rotation_matrix_delta
                       
                        # 记录轨迹数据
-                       if self.init_time is not None:  # 确保时间已初始化
+                       if self.init_time is not None and self.recording_state:  # 确保时间已初始化
                            self.trajectory_queue.put({
                                'motion_6d': motion2array(translation_delta, rotation_angles),
                                'current_pose_7d': pose2array(self.target_pose),
+                               'keyboard_states': self.gripper_state,
                                'timestamp': rospy.Time.now().to_time() - self.init_time,
                                'sequence_id': self.index,
                            })
@@ -157,12 +262,17 @@ class Sm_franka_teleop:
                        self.fa.stop_skill()
                    except:
                        pass
+                   
+                   # 停止键盘监听器
+                   if keyboard_listener:
+                       keyboard_listener.stop()
+                       rospy.loginfo("✅ 键盘监听已停止")
               
-               rospy.loginfo(f"遥操作结束 - 共记录 {self.index} 个轨迹点")
+               rospy.loginfo(f"遥操作结束 - 共执行 {self.index} 个控制步")
               
-               # 可选：保存轨迹到文件
+               # 保存录制的轨迹数据
                if self.trajectory_queue and self.trajectory_queue.qsize() > 0:
-                   rospy.loginfo(f"队列中有 {self.trajectory_queue.qsize()} 个数据点可用于回放")
+                   rospy.loginfo(f"📊 队列中有 {self.trajectory_queue.qsize()} 个录制数据点")
 
 
                    # 在SharedMemoryManager上下文内保存数据
@@ -176,8 +286,9 @@ class Sm_franka_teleop:
 
                        # 显示保存信息
                        num_points = len(next(iter(traj_data.values())))
-                       rospy.loginfo(f"✅ 轨迹数据已保存到: {filename}")
-                       rospy.loginfo(f"   记录了 {num_points} 个数据点")
+                       rospy.loginfo(f"✅ 录制的轨迹数据已保存到: {filename}")
+                       rospy.loginfo(f"   📝 记录了 {num_points} 个有效数据点")
+                       rospy.loginfo(f"   🤖 包含夹爪状态和机械臂轨迹信息")
 
 
                        # 显示数据结构信息
@@ -190,7 +301,7 @@ class Sm_franka_teleop:
                        import traceback
                        rospy.logerr(traceback.format_exc())
                else:
-                   rospy.logwarn("没有记录到轨迹数据")
+                   rospy.logwarn("⚠️  没有记录到轨迹数据 - 请按 'R' 键开始录制")
 
 
    def get_recorded_trajectory(self):
