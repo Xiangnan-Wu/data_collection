@@ -14,8 +14,14 @@ try:
 except ImportError:
     print("Warning: pyspacemouse not installed. Please install: pip install pyspacemouse")
     pyspacemouse = None
+import os, sys
 
-from ..shared_memory.shared_memory_ring_buffer import SharedMemoryRingBuffer
+# 添加当前目录和子目录到Python路径
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT_DIR)
+
+
+from shared_memory.shared_memory_ring_buffer import SharedMemoryRingBuffer
 
 
 class FrankaSpacemouse(mp.Process):
@@ -113,9 +119,9 @@ class FrankaSpacemouse(mp.Process):
         # Franka坐标系转换矩阵
         # SpaceMouse的原始坐标系到机器人世界坐标系的转换
         self.tx_spacemouse_to_world = np.array([
-            [0, 0, -1],    # SpaceMouse Z轴 -> 世界 -X轴
+            [0, 1, 0],    # SpaceMouse Z轴 -> 世界 -X轴
             [1, 0, 0],     # SpaceMouse X轴 -> 世界 Y轴  
-            [0, 1, 0]      # SpaceMouse Y轴 -> 世界 Z轴
+            [0, 0, 1]      # SpaceMouse Y轴 -> 世界 Z轴
         ], dtype=dtype)
 
         # 构建共享内存数据结构
@@ -165,10 +171,15 @@ class FrankaSpacemouse(mp.Process):
             
         return motion_state
     
-    def get_motion_state_raw(self) -> np.ndarray:
+    def get_motion_state_raw(self, apply_sensitivity = True) -> np.ndarray:
         """获取原始运动状态（未经坐标转换）"""
         data = self.ring_buffer.get()
-        return data['motion_state_raw']
+        motion_state = data['motion_state_raw'].copy()
+
+        if apply_sensitivity:
+            motion_state[:3] *= self.position_sensitivity
+            motion_state[3:] *= self.rotation_sensitivity
+        return motion_state
     
     def get_control_mode(self) -> dict:
         """获取当前控制模式"""

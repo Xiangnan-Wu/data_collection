@@ -7,6 +7,7 @@ from frankapy import FrankaConstants as FC
 from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
 from frankapy.proto import PosePositionSensorMessage, ShouldTerminateSensorMessage, CartesianImpedanceSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
+from scipy.spatial.transform import Rotation as R
 
 import rospy
 
@@ -16,10 +17,20 @@ if __name__ == "__main__":
 
     rospy.loginfo('Generating Trajectory')
 
-    pose_traj = pkl.load(open('franka_traj.pkl','rb'))
+    traj_dict = pkl.load(open('franka_traj_my.pkl','rb')) # 一个字典，里面每个元素是一个包含了多个array的array
+    pose_traj = []
+    for i, pose_array in enumerate(traj_dict['current_pose_7d']):
+        # 将旋转转换为四元数
+        pose = RigidTransform(
+            translation=pose_array[:3],
+            rotation=RigidTransform.rotation_from_quaternion(pose_array[3:]),
+            from_frame = 'franka_tool',
+            to_frame= 'world'  # 假设目标坐标系是世界坐标系
+        )
+        pose_traj.append(pose)
 
-    T = 10 # 总执行时间
-    dt = 0.01 # 时间步长 —— 频率100 Hz
+    T = 30 # 总执行时间
+    dt = 0.02 # 时间步长 —— 频率100 Hz
     ts = np.arange(0, T, dt) # 10s * 100HZ = 1000个时间点 —— 1000个时间点，每个时间点执行一个轨迹点
 
     rospy.loginfo('Initializing Sensor Publisher')
@@ -30,7 +41,6 @@ if __name__ == "__main__":
     # To ensure skill doesn't end before completing trajectory, make the buffer time much longer than needed
     # 为了确保轨迹执行完成，设置的buffer时间比实际需要的时间长
     fa.goto_pose(pose_traj[1], duration=T, dynamic=True, buffer_time=10,
-        cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0] # 阻抗控制参数
     )
     init_time = rospy.Time.now().to_time()
     for i in range(2, len(ts)):

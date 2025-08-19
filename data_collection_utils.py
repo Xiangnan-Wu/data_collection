@@ -48,7 +48,7 @@ def publish_pose(pose:RigidTransform, id:int, timestamp:float, pub:rospy.Publish
         trajectory_generator_sensor_msg=sensor_proto2ros_msg(
             traj_gen_proto_msg, SensorDataMessageType.POSE_POSITION),
     )
-    rospy.loginfo('Publishing: ID {}'.format(traj_gen_proto_msg.id))
+    # rospy.loginfo('Publishing: ID {}'.format(traj_gen_proto_msg.id))
     pub.publish(ros_msg)
     rate.sleep()
 
