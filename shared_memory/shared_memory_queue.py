@@ -241,6 +241,29 @@ class SharedMemoryQueue:
         self.read_counter.add(n_data)
         return out
     
+    def peek_all(self, out=None) -> Dict[str, np.ndarray]:
+       """
+       查看队列中的所有数据（非消费性读取）
+
+
+       Args:
+           out: 可选的输出缓冲区
+
+
+       Returns:
+           获取的所有数据字典，不移动读指针
+       """
+       write_count = self.write_counter.load()
+       read_count = self.read_counter.load()
+       n_data = write_count - read_count
+       if n_data <= 0:
+           raise Empty()
+
+
+       out = self._get_k_impl(n_data, read_count, out=out)
+       # 注意：这里不调用 self.read_counter.add(n_data)
+       return out
+    
     def _get_k_impl(self, k, read_count, out=None) -> Dict[str, np.ndarray]:
         """获取k个数据的内部实现"""
         if out is None:
