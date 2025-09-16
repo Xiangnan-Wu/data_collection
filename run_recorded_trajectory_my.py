@@ -30,13 +30,13 @@ if __name__ == "__main__":
    traj_dict = pkl.load(open('franka_traj_my.pkl','rb')) # 一个字典，里面每个元素是一个包含了多个array的array
    pose_len = len(traj_dict['current_pose_7d']) # 用pose len动态控制执行时间
    pose_traj = []
-       # 获取对应时间点的夹爪状态
-       gripper_state = traj_dict['keyboard_states'][i]
-       pose_with_grip = {
-           'pose': pose,
-           'gripper_state': gripper_state
-       }
-       pose_traj.append(pose_with_grip)
+   # 获取对应时间点的夹爪状态
+   gripper_state = traj_dict['keyboard_states'][i]
+   pose_with_grip = {
+        'pose': pose,
+        'gripper_state': gripper_state
+    }
+   pose_traj.append(pose_with_grip)
 
 
    T = 30 # 总执行时间

@@ -60,13 +60,10 @@ class ZedCam:
     def init_zed(self,serial_number):
         init_params = sl.InitParameters()
         init_params.set_from_serial_number(serial_number)
-<<<<<<< HEAD
+
         init_params.camera_resolution = sl.RESOLUTION.VGA
         init_params.camera_fps = 100
-=======
-        init_params.camera_resolution = sl.RESOLUTION.HD1080
-        init_params.camera_fps = 30
->>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
+
         init_params.depth_mode = sl.DEPTH_MODE.NEURAL
         init_params.coordinate_units = sl.UNIT.MILLIMETER
 
@@ -80,19 +77,13 @@ class ZedCam:
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.AEC_AGC_ROI, 0)  # 禁用自动曝光ROI
         
         # 设置固定的曝光值和增益值
-<<<<<<< HEAD
+
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 45)  # 设置固定曝光值
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.GAIN, 35)      # 设置固定增益值
         
         # 设置固定亮度
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.BRIGHTNESS, 6) # 设置固定亮度值
-=======
-        self.zed.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 35)  # 设置固定曝光值
-        self.zed.set_camera_settings(sl.VIDEO_SETTINGS.GAIN, 35)      # 设置固定增益值
-        
-        # 设置固定亮度
-        self.zed.set_camera_settings(sl.VIDEO_SETTINGS.BRIGHTNESS, 4) # 设置固定亮度值
->>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
+
         
         # 初始化50帧
         image = sl.Mat()
@@ -350,15 +341,10 @@ if __name__ == "__main__":
         o3d.visualization.draw_geometries([pcd_o3d, coordinate_frame])
 
     observation["3rd"]["pcd"] = convert_pcd_to_base("3rd", observation["3rd"]["pcd"])
-<<<<<<< HEAD
+
     vis_pcd(observation["3rd"]["pcd"], observation["3rd"]["rgb"])    
     
 
     save_rgb_image(observation["3rd"]["rgb"], "/media/casia/data4/wxn/debug.png")    
-=======
-    # vis_pcd(observation["3rd"]["pcd"], observation["3rd"]["rgb"])    
-    
 
-    save_rgb_image(observation["3rd"]["rgb"], "/media/casia/data2/lpy/3D_VLA/code/Demo/debug.png")    
->>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
 

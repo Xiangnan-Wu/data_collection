@@ -6,7 +6,7 @@ sys.path.insert(0, current_dir)
 sys.path.insert(0, os.path.join(current_dir, 'input_device'))
 sys.path.insert(0, os.path.join(current_dir, 'shared_memory'))
 
-<<<<<<< HEAD
+
 
 # 导入pynput库替代keyboard（不需要sudo权限）
 try:
@@ -17,17 +17,6 @@ except ImportError:
    pynput_keyboard = None
    pynput_available = False
 
-
-=======
-# 导入pynput库替代keyboard（不需要sudo权限）
-try:
-    from pynput import keyboard as pynput_keyboard
-    pynput_available = True
-except ImportError:
-    print("Warning: pynput not installed. Please install: pip install pynput")
-    pynput_keyboard = None
-    pynput_available = False
->>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
 
 
 # 直接导入模块文件
@@ -44,8 +33,6 @@ import rospy
 from multiprocessing.managers import SharedMemoryManager
 from scipy.spatial.transform import Rotation as R
 import pickle as pkl
-
-<<<<<<< HEAD
 
 
 
@@ -321,9 +308,10 @@ class Sm_franka_teleop:
       return None
 
 
-=======
+
 
 class Sm_franka_teleop:
+
    def __init__(self, T: float, dt: float):
        """
        初始化SpaceMouse遥操作控制器
@@ -600,12 +588,13 @@ class Sm_franka_teleop:
        if self.trajectory_queue and not self.trajectory_queue.empty():
            return self.trajectory_queue.peek_all()
        return None
->>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
+
+
 
 
 # 使用示例
 if __name__ == "__main__":
-<<<<<<< HEAD
+
    # 创建遥操作控制器
   teleop = Sm_franka_teleop(T=90.0, dt=0.01)  # 30秒，50Hz
   try:
@@ -619,17 +608,6 @@ if __name__ == "__main__":
 
 
 
-
-=======
-  
-   # 创建遥操作控制器
-   teleop = Sm_franka_teleop(T=30.0, dt=0.02)  # 30秒，50Hz
-  
-   try:
-       teleop.run_teleoperation(save_traj=True)
-   except Exception as e:
-       rospy.logerr(f"主程序错误: {e}")
->>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
 
 
 
