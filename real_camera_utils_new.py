@@ -26,8 +26,13 @@ def get_cam_extrinsic(type):
     if type == "3rd":
         # trans = np.array([1.1340949379013272, 0.561350863040624, 0.5357989602947655])
         # quat = np.array([-0.3851963087555203, -0.7686884118133567, 0.4146037462420932, 0.2980698959422155])
+<<<<<<< HEAD
         trans=np.array([1.0472367143501216, 0.023761683274528322,  0.8609737768789085])
         quat=np.array([ -0.6359435618886714, -0.64373193090706,0.29031610459898505,0.311290132566853]) # x y z w
+=======
+        trans=np.array([1.028818510131928, -0.04212360892289513,  0.6338377191806316])
+        quat=np.array([ -0.6333204911007358, -0.6400364927579377, 0.3240327100190967,0.29027787777872616]) # x y z w
+>>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
     elif type == "wrist":
         trans = np.array([0.6871684912377796 , -0.7279882263970943,  0.8123566411202088])
         quat = np.array([-0.869967706085017,  -0.2561670369853595,  0.13940123346877276,  0.39762034107764127])
@@ -60,8 +65,13 @@ class ZedCam:
     def init_zed(self,serial_number):
         init_params = sl.InitParameters()
         init_params.set_from_serial_number(serial_number)
+<<<<<<< HEAD
         init_params.camera_resolution = sl.RESOLUTION.VGA
         init_params.camera_fps = 100
+=======
+        init_params.camera_resolution = sl.RESOLUTION.HD1080
+        init_params.camera_fps = 30
+>>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
         init_params.depth_mode = sl.DEPTH_MODE.NEURAL
         init_params.coordinate_units = sl.UNIT.MILLIMETER
 
@@ -75,11 +85,19 @@ class ZedCam:
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.AEC_AGC_ROI, 0)  # 禁用自动曝光ROI
         
         # 设置固定的曝光值和增益值
+<<<<<<< HEAD
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 45)  # 设置固定曝光值
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.GAIN, 35)      # 设置固定增益值
         
         # 设置固定亮度
         self.zed.set_camera_settings(sl.VIDEO_SETTINGS.BRIGHTNESS, 6) # 设置固定亮度值
+=======
+        self.zed.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 35)  # 设置固定曝光值
+        self.zed.set_camera_settings(sl.VIDEO_SETTINGS.GAIN, 35)      # 设置固定增益值
+        
+        # 设置固定亮度
+        self.zed.set_camera_settings(sl.VIDEO_SETTINGS.BRIGHTNESS, 4) # 设置固定亮度值
+>>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
         
         # 初始化50帧
         image = sl.Mat()
@@ -337,8 +355,15 @@ if __name__ == "__main__":
         o3d.visualization.draw_geometries([pcd_o3d, coordinate_frame])
 
     observation["3rd"]["pcd"] = convert_pcd_to_base("3rd", observation["3rd"]["pcd"])
+<<<<<<< HEAD
     vis_pcd(observation["3rd"]["pcd"], observation["3rd"]["rgb"])    
     
 
     save_rgb_image(observation["3rd"]["rgb"], "/media/casia/data4/wxn/debug.png")    
+=======
+    # vis_pcd(observation["3rd"]["pcd"], observation["3rd"]["rgb"])    
+    
+
+    save_rgb_image(observation["3rd"]["rgb"], "/media/casia/data2/lpy/3D_VLA/code/Demo/debug.png")    
+>>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
 

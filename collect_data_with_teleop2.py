@@ -170,7 +170,7 @@ class CollectDataWithTeleop2:
            pass
       
    def control_step(self) -> bool:
-       """控制步骤，首先拍照记录当前Observation，然后记录机械臂状态，最后通过ros发布机械臂动作"""
+       
       
        # 更新键盘状态
        keyboard_states = self.update_keyboard_state()

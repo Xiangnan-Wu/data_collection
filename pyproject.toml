@@ -5,10 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+<<<<<<< HEAD
     "atomics>=1.0.3",
     "keyboard",
     "pynput>=1.8.1",
     "pyrealsense2>=2.56.5.9235",
     "pyspacemouse>=1.1.4",
     "pyzed>=1.3.0",
+=======
+    "keyboard>=0.13.5",
+    "numpy>=2.2.6",
+>>>>>>> 6bb17a265de97c1b510c6b8789ff36a36ea93bd6
 ]
